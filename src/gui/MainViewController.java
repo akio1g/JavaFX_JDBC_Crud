@@ -32,7 +32,7 @@ public class MainViewController implements Initializable {
 
 	@FXML
 	public void onMiDepartmentAction() {
-		System.out.println("Criando registro!");
+		loadView("/gui/DepartmentList.fxml");
 	}
 
 	@FXML
