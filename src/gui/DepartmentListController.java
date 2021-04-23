@@ -69,8 +69,8 @@ public class DepartmentListController implements Initializable, DataChangeListen
 	}
 
 	private void initializeNodes() {
-		tcId.setCellValueFactory(new PropertyValueFactory<>("Id")); // define nome da coluna
-		tcName.setCellValueFactory(new PropertyValueFactory<>("Name"));
+		tcId.setCellValueFactory(new PropertyValueFactory<>("id")); // define nome da coluna
+		tcName.setCellValueFactory(new PropertyValueFactory<>("name"));
 
 		Stage stage = (Stage) Main.GetMainScene().getWindow();
 		tvDepartment.prefHeightProperty().bind(stage.heightProperty()); // macete pra tabela acompanhar a janela
