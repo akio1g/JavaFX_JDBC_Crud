@@ -1,9 +1,11 @@
 package gui;
 
 import java.net.URL;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -15,22 +17,31 @@ import gui.listeners.DataChangeListener;
 import gui.util.Alerts;
 import gui.util.Constraints;
 import gui.util.Utils;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.util.Callback;
+import model.entities.Department;
 import model.entities.Seller;
 import model.exceptions.ValidationException;
+import model.services.DepartmentService;
 import model.services.SellerService;
 
 public class SellerFormController implements Initializable {
 
 	private Seller entity;
 	private SellerService service;
+	private DepartmentService departmentService;
 	private List<DataChangeListener> dataChangeListeners = new ArrayList<>();
 	@FXML
 	private TextField tfId;
@@ -54,6 +65,8 @@ public class SellerFormController implements Initializable {
 	private Button btSave;
 	@FXML
 	private Button btCancel;
+	@FXML
+	private ComboBox<Department> cbDepartment;
 
 	@FXML
 	public void onBtSaveAction(ActionEvent event) {
@@ -91,6 +104,19 @@ public class SellerFormController implements Initializable {
 			exception.addError("name", "Field can't be empty");
 		}
 		obj.setName(tfName.getText());
+		
+		if (tfEmail.getText() == null || tfEmail.getText().trim().equals("")) {
+			exception.addError("email", "Field can't be empty");
+		}
+		obj.setEmail(tfEmail.getText());
+		
+		Instant instant = Instant.from(dpBirthDate.getValue().atStartOfDay(ZoneId.systemDefault()));
+		obj.setBirthDate(Date.from(instant));
+		
+		if (tfBaseSalary.getText() == null || tfBaseSalary.getText().trim().equals("")) {
+			exception.addError("baseSalary", "Field can't be empty");
+		}
+		obj.setBaseSalary(Utils.tryParseToDouble(tfBaseSalary.getText()));		
 
 		if (exception.getErrors().size() > 0) { // se tive erro, lança exception
 			throw exception;
@@ -104,12 +130,15 @@ public class SellerFormController implements Initializable {
 		Utils.currentStage(event).close();
 	}
 
+	private ObservableList<Department> obsList;
+
 	public void setSeller(Seller entity) {
 		this.entity = entity;
 	}
 
-	public void setSellerService(SellerService service) {
+	public void setServices(SellerService service, DepartmentService departmentService) {
 		this.service = service;
+		this.departmentService = departmentService;
 	}
 
 	public void subscribeDataChangeListener(DataChangeListener listener) {
@@ -127,6 +156,8 @@ public class SellerFormController implements Initializable {
 		Constraints.setTextFieldDouble(tfBaseSalary);
 		Constraints.setTextFieldMaxLength(tfEmail, 50);
 		Utils.formatDatePicker(dpBirthDate, "dd/MM/yyyy");
+
+		initializeComboBoxDepartment();
 	}
 
 	public void updateFormData() {
@@ -138,6 +169,17 @@ public class SellerFormController implements Initializable {
 		if (entity.getBirthDate() != null) {
 			dpBirthDate.setValue(LocalDate.ofInstant(entity.getBirthDate().toInstant(), ZoneId.systemDefault()));
 		}
+		if (entity.getDepartment() == null) {
+			cbDepartment.getSelectionModel().selectFirst();
+		} else {
+			cbDepartment.setValue(entity.getDepartment());
+		}
+	}
+
+	public void loadAssociatedObjects() { // carregar os departamentos pro combobox
+		List<Department> list = departmentService.findAll();
+		obsList = FXCollections.observableArrayList(list);
+		cbDepartment.setItems(obsList);
 	}
 
 	private void setErrorMessages(Map<String, String> error) {
@@ -145,5 +187,24 @@ public class SellerFormController implements Initializable {
 		if (fields.contains("name")) {
 			lblErrorName.setText(error.get("name"));
 		}
+		if (fields.contains("email")) {
+			lblErrorEmail.setText(error.get("email"));
+		}
+		if (fields.contains("baseSalary")) {
+			lblErrorSalary.setText(error.get("baseSalary"));
+		}
+		
+	}
+
+	private void initializeComboBoxDepartment() {
+		Callback<ListView<Department>, ListCell<Department>> factory = lv -> new ListCell<Department>() {
+			@Override
+			protected void updateItem(Department item, boolean empty) {
+				super.updateItem(item, empty);
+				setText(empty ? "" : item.getName());
+			}
+		};
+		cbDepartment.setCellFactory(factory);
+		cbDepartment.setButtonCell(factory.call(null));
 	}
 }
