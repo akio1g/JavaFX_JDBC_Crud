@@ -104,20 +104,24 @@ public class SellerFormController implements Initializable {
 			exception.addError("name", "Field can't be empty");
 		}
 		obj.setName(tfName.getText());
-		
+
 		if (tfEmail.getText() == null || tfEmail.getText().trim().equals("")) {
 			exception.addError("email", "Field can't be empty");
 		}
 		obj.setEmail(tfEmail.getText());
-		
-		Instant instant = Instant.from(dpBirthDate.getValue().atStartOfDay(ZoneId.systemDefault()));
-		obj.setBirthDate(Date.from(instant));
-		
+
+		if (dpBirthDate.getValue() == null) {
+			exception.addError("birthDate", "Field can't be empty");
+		} else {
+			Instant instant = Instant.from(dpBirthDate.getValue().atStartOfDay(ZoneId.systemDefault()));
+			obj.setBirthDate(Date.from(instant));
+		}
+
 		if (tfBaseSalary.getText() == null || tfBaseSalary.getText().trim().equals("")) {
 			exception.addError("baseSalary", "Field can't be empty");
 		}
-		obj.setBaseSalary(Utils.tryParseToDouble(tfBaseSalary.getText()));		
-
+		obj.setBaseSalary(Utils.tryParseToDouble(tfBaseSalary.getText()));
+		obj.setDepartment(cbDepartment.getValue());
 		if (exception.getErrors().size() > 0) { // se tive erro, lança exception
 			throw exception;
 		}
@@ -184,16 +188,12 @@ public class SellerFormController implements Initializable {
 
 	private void setErrorMessages(Map<String, String> error) {
 		Set<String> fields = error.keySet();
-		if (fields.contains("name")) {
-			lblErrorName.setText(error.get("name"));
-		}
-		if (fields.contains("email")) {
-			lblErrorEmail.setText(error.get("email"));
-		}
-		if (fields.contains("baseSalary")) {
-			lblErrorSalary.setText(error.get("baseSalary"));
-		}
 		
+		lblErrorName.setText(fields.contains("name") ? error.get("name") : "");
+		lblErrorEmail.setText(fields.contains("email") ? error.get("email") : "");
+		lblErrorSalary.setText(fields.contains("baseSalary") ? error.get("baseSalary") : "");
+		lblErrorBirthDate.setText(fields.contains("birthDate") ? error.get("birthDate") : "");
+
 	}
 
 	private void initializeComboBoxDepartment() {
